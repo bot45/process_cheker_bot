@@ -5,8 +5,10 @@ import config
 import time
 import psutil    # pip install psutil
 import sqlite3
+import datetime
 
 bot = telebot.TeleBot(config.TOKEN_SPIDER)
+list1 = []
 
 
 @bot.message_handler(commands=["downed"])
@@ -18,20 +20,12 @@ def downed(message):
         bot.reply_to(message, f'\n{"ACCESS DENIED"}')
 
 
-@bot.message_handler(commands=["info"])
-def info(message):
-    if id_user(message) is True:
-        stat(message)
-    else:
-        bot.reply_to(message, f'\n{"ACCESS DENIED"}')
-
-
 @bot.message_handler(commands=["start"])
 def start(message):
     if id_user(message) is True:
         while True:
             stat(message)
-            time.sleep(10)
+            time.sleep((60 * 60) * 24)
     else:
         bot.reply_to(message, f'\n{"ACCESS DENIED"}')
 
@@ -39,46 +33,43 @@ def start(message):
 @bot.message_handler(content_types=['text'])
 def id_user(message):
     user_id = message.from_user.id
-    f_name = message.from_user.first_name    # when user send you a message, it shows you name and id in terminal.
-    print(f_name, user_id)     # when user send you a message, it shows you name and id in terminal.
+    # f_name = message.from_user.first_name    # when user send you a message, it shows you name and id in terminal.
+    # print(f_name, user_id)     # when user send you a message, it shows you name and id in terminal.
     conn = sqlite3.connect("database_users.db")
     for y in conn.execute(f"SELECT userid FROM users WHERE userid='{int(user_id)}'"):
         for x in y:
             if int(user_id) == int(x):
                 return True
-        else:
-            return False
+
     conn.close()
 
 
 def down(message):
     while True:
+        date = message.date
+        unix_date = datetime.datetime.fromtimestamp(date)
         list_diff = []
         proc1 = []
         for proc in psutil.process_iter(['pid', 'name']):
             proc1.append(proc.name())
-            data = (                   # type name of your process
-                "Telegram",
-                "htop"
-            )
+            data = ["Telegram", "plank", "sublime_text"]  # type name of your process
             if data not in proc1:
                 list_diff = set(data) - set(proc1)
         if len(list_diff) <= 0:
             continue
-        bot.send_message(message.chat.id, f'\n ⚠PROCESS_IS_DOWN⚠\n{list_diff}')
-        time.sleep(10)
+        bot.send_message(message.chat.id, f'\n ⚠PROCESS_IS_DOWN⚠\n{list_diff}\ndata_log:\n{unix_date}')
+        time.sleep((60 * 60) * 6)
 
 
 def stat(message):
     for proc in psutil.process_iter(['pid', 'name', 'username']):
-        data = (                      # type name of your process
-            "Telegram",
-            "htop"
-        )
+        data = ["Telegram", "plank", "sublime_text"]                       # type name of your process
         for data in data:
             if data in proc.name():
+                list1.append(data)
                 time.sleep(1)
                 bot.send_message(message.chat.id, f'\n{proc.name()} ✅ \nPID {proc.pid}')
+                del list1[:]
 
 
 def bot_polling():
@@ -97,4 +88,5 @@ def bot_polling():
             break
 
 
+bot.delete_webhook(drop_pending_updates=True)
 bot_polling()
