@@ -7,7 +7,7 @@ import psutil    # pip install psutil
 import sqlite3
 import datetime
 
-bot = telebot.TeleBot(config.TOKEN_SPIDER)
+bot = telebot.TeleBot(config.TOKEN_1)
 list1 = []
 
 
